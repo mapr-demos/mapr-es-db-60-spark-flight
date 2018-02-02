@@ -212,7 +212,7 @@ maprdb mapr:> find /apps/flights --where '{"$and":[{"$eq":{"pred_dtree":1.0}},{ 
 ```
 find /apps/flights --where '{"$and":[{"$eq":{"pred_dtree":1.0}},{ "$like" : {"_id":"%SFO_DEN%"} }]}' --f _id,pred_dtree
 ```
-**find all of the american airlines flights predicted late **
+**find all of the american airlines flights predicted late**
 ```
 maprdb mapr:> find /apps/flights --where '{"$and":[{"$eq":{"pred_dtree":1.0}},{ "$like" : {"_id":"AA%"} }]}' --f _id,pred_dtree
 ```
