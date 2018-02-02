@@ -35,7 +35,11 @@ In the docker container use the mapr command line interface to create a stream, 
 maprcli stream create -path /apps/stream -produceperm p -consumeperm p -topicperm p
 maprcli stream topic create -path /apps/stream -topic flights -partitions 3
 maprcli stream topic create -path /apps/stream -topic flightp -partitions 3  
-
+```
+get info on topic
+```
+maprcli stream topic info -path /apps/stream -topic flights
+```
 maprcli table create -path /mapr/maprdemo.mapr.io/apps/flights -tabletype json -defaultreadperm p -defaultwriteperm p
   
 ```
@@ -49,15 +53,21 @@ maprcli table create -path /mapr/maprdemo.mapr.io/apps/flights -tabletype json -
 
 From a mac terminal window , in your project directory
 
-Run hadoop fs commands to put the data. The MapR Container For Developers does not include MapR NFS, so you will need to use this command to put the JSON files on the MapR filesystem.
+If MapR NFS is installed and the cluster is mounted at /mapr then you can use cp to copy files. 
+
+The MapR Container For Developers does not include MapR NFS, so you will need to use the hadoop command to put the JSON files on the MapR filesystem.
+Run hadoop fs commands to put the data:
+
+```
 hadoop fs -put ./data/*.json /tmp/
+```
 
 this will put the data files into the cluster directory: 
 /mapr/<cluster-name>/tmp/
 
 #### 3.  Build project with maven and/or load into your IDE
 
-**Optionally Build the project (not necessary if you are running from your IDE**
+**Build the project  with maven (not necessary if you are running from your IDE)**
 
 from your mac terminal use maven to build the project
 
@@ -70,14 +80,16 @@ This creates the following jars in the target directory.
 - `mapr-es-db-60-spark-flight-1.0.jar`
 - `mapr-es-db-60-spark-flight-1.0-jar-with-dependencies.jar`
 
-**Optionally Import your project into Intellij IDE**
+**Or Import your project into Intellij IDE**
 
-import or open the maven project with Injellij or Netbeans IDE 
+IntelliJ
+Install IntelliJ from https://www.jetbrains.com/idea/download/
+Add the scala language plugin
+Import the code as a maven project and let it build
 
 
 #### 4. Run the Spark program which will create and save the machine learning model
 
-**Run the java publisher and the Spark consumer**
 
 From your mac in the mapr-es-db-spark-payment directory you can run the Spark program which will create and save the machine learning model 
 or you can run from your IDE by right mouse clicking on the ml.Flight file and selecting run:
@@ -92,7 +104,6 @@ You can optionally pass the files  as input parameters <file file modelpath>   (
 
 #### 5. Run the Java client to publish events to the topic 
 
-**Run the java publisher and the Spark consumer**
 
 From your mac in the mapr-es-db-spark-payment directory you can run the java client to publish with the following command 
 or you can run from your IDE by right mouse clicking on the streams.MsgProducer java file and selecting run:
@@ -128,7 +139,7 @@ You can optionally pass the topic and table as input parameters <topic table>
 
 #### 8. Run the Spark SQL client to load and query data from MapR-DB with Spark-DB Connector
 
-You can wait for the java client and spark consumer to finish, or from a separate mac terminal you can run the spark sql with the following command, 
+You can wait for the java client and spark consumers to finish, or from a separate mac terminal you can run the spark sql with the following command, 
 or you can run from your IDE :
 
 ```
@@ -169,12 +180,11 @@ $ java -cp ./target/mapr-es-db-60-spark-flight-1.0.jar:./target/* maprdb.OJAI_Si
 ```
 
 #### 11. Using the MapR-DB shell and Drill from your mac client 
-Refer to [**connecting clients **](https://maprdocs.mapr.com/home/MapRContainerDevelopers/ConnectingClients.html) for 
-information on setting up the Drill client
+
 
 **Use MapR DB Shell to Query the Payments table**
 
-In this section you will  use the DB shell to query the Payments JSON table
+In this section you will  use the DB shell to query the Flights JSON table
 
 To access MapR-DB from your mac client or logged into the container, you can use MapR-DB shell:
 
@@ -189,53 +199,57 @@ $ maprdb mapr:> jsonoptions --pretty true --withtags false
 ```
 **find 5 documents**
 ```
-maprdb mapr:> find /apps/payments --limit 5
+maprdb mapr:> find /apps/flights --limit 5
+```
+```
+maprdb mapr:> find /apps/flights --where '{ "$eq" : {"origin":"ATL"} }' --f _id,origin,dest,pred_dtree
 ```
 Note that queries by _id will be faster because _id is the primary index
 
-**Query document with Condition _id starts with 98485 (physician id)**
+**find all of the Atlanta flights predicted late**
 ```
-maprdb mapr:> find /apps/payments --where '{ "$like" : {"_id":"98485%"} }' --f _id,amount
+maprdb mapr:> find /apps/flights --where '{"$and":[{"$eq":{"pred_dtree":1.0}},{ "$like" : {"_id":"%ATL%"} }]}' --f _id,pred_dtree
 ```
-**Query document with Condition _id has february**
+**find all of the SFO->DEN flights that were late**
 ```
-find /apps/payments --where '{ "$like" : {"_id":"%_02/%"} }' --f _id,amount
+find /apps/flights --where '{"$and":[{"$eq":{"pred_dtree":1.0}},{ "$like" : {"_id":"%SFO_DEN%"} }]}' --f _id,pred_dtree
 ```
-**find all payers=**
+**find all of the american airlines flights predicted late *
 ```
-maprdb mapr:> find /apps/payments --where '{ "$eq" : {"payer":"Mission Pharmacal Company"} }' --f _id,payer,amount,nature_of_payment
+maprdb mapr:> find /apps/flights --where '{"$and":[{"$eq":{"pred_dtree":1.0}},{ "$like" : {"_id":"AA%"} }]}' --f _id,pred_dtree
 ```
 
 **Use Drill Shell to query MapR-DB**
+Refer to [**connecting clients **](https://maprdocs.mapr.com/home/MapRContainerDevelopers/ConnectingClients.html) for 
+information on setting up the Drill client
 
 From your mac terminal connect to Drill as user mapr through JDBC by running sqlline:
 /opt/mapr/drill/drill-1.11.0/bin/sqlline -u "jdbc:drill:drillbit=localhost" -n mapr
 
-**Query document with Condition _id has february**
 
-**Who are top 5 Physician Ids by Amount**
+**what is the count of predicted delay/notdelay by scheduled departure hour*
 ```
-0: jdbc:drill:drillbit=localhost> select physician_id, sum(amount) as revenue from dfs.`/apps/payments` group by physician_id order by revenue desc limit 5;
+0: jdbc:drill:drillbit=localhost> select crsdephour, pred_dtree, count(pred_dtree) as countp from dfs.`/apps/flights` group by crsdephour, pred_dtree order by crsdephour;
 ```
-**What are top 5 nature of payments by Amount**
+**what is the count of predicted delay/notdelay by origin**
 ```
-0: jdbc:drill:drillbit=localhost> select nature_of_payment,  sum(amount) as total from dfs.`/apps/payments` group by nature_of_payment order by total desc limit 5;
+> select origin, pred_dtree, count(pred_dtree) as countp from dfs.`/apps/flights` group by origin, pred_dtree order by origin;
 ```
-**Query for payments for physician id**
+**what is the count of predicted and actual  delay/notdelay by origin**
 ```
-0: jdbc:drill:drillbit=localhost> select _id,  amount from dfs.`/apps/payments` where _id like '98485%';
+> select origin, pred_dtree, count(pred_dtree) as countp,label, count(label) as countl from dfs.`/apps/flights` group by origin, pred_dtree, label order by origin, label, pred_dtree;
 ```
-**Query for payments in february**
+**what is the count of predicted delay/notdelay by dest**
 ```
-0: jdbc:drill:drillbit=localhost> select _id,  amount from dfs.`/apps/payments` where _id like '%[_]02/%';
+> select dest, pred_dtree, count(pred_dtree) as countp from dfs.`/apps/flights` group by dest, pred_dtree order by dest;
 ```
-**Queries on payer**
+**what is the count of predicted delay/notdelay by origin,dest  day of the week,  carrier**
 ```
-0: jdbc:drill:drillbit=localhost> select _id, amount, payer from dfs.`/apps/payments` where payer='CorMatrix Cardiovascular Inc.';
+> select origin,dest, pred_dtree, count(pred_dtree) as countp from dfs.`/apps/flights` group by origin,dest, pred_dtree order by origin,dest;
 
-0: jdbc:drill:drillbit=localhost> select _id, amount, payer from dfs.`/apps/payments` where payer like '%Dental%';
+> select dofW, pred_dtree, count(pred_dtree) as countp from dfs.`/apps/flights` group by dofW, pred_dtree order by dofW;
 
-0: jdbc:drill:drillbit=localhost> select  distinct(payer) from dfs.`/apps/payments` ;
+> select carrier, pred_dtree, count(pred_dtree) as countp from dfs.`/apps/flights` group by carrier, pred_dtree order by carrier;
 ```
 
 
@@ -246,36 +260,37 @@ Let's now add indices to the payments table.
 In a docker container terminal window:
 
 ```
-$ maprcli table index add -path /apps/payments -index idx_payer -indexedfields 'payer:1'
+$ maprcli table index add -path /apps/flights -index idx_origin -indexedfields 'origin:1'
 ```
-In MapR-DB Shell, try queries on payments payers and compare with previous query performance:
+In MapR-DB Shell, try queries on flights origin  and compare with previous query performance:
 ```
-maprdb mapr:> find /apps/payments --where '{ "$eq" : {"payer":"Mission Pharmacal Company"} }' --f _id,payer,amount,nature_of_payment
+maprdb mapr:> find /apps/flights --where '{ "$eq" : {"origin":"ATL"} }' --f _id,origin,dest,pred_dtree
 ```
 In Drill try 
 ```
-0: jdbc:drill:drillbit=localhost> select _id, amount, payer from dfs.`/apps/payments` where payer='CorMatrix Cardiovascular Inc.';
+0: jdbc:drill:drillbit=localhost> select _id, pred_dtree from dfs.`/apps/flights` where origin='ATL' and pred_dtree=1.0;
 
-0: jdbc:drill:drillbit=localhost> select _id, amount, payer from dfs.`/apps/payments` where payer like '%Dental%';
+0: jdbc:drill:drillbit=localhost> select _id, pred_dtree , dofW, crsdephour from dfs.`/apps/flights` where origin like 'A%' and dofW=6 and pred_dtree=1.0;
 
-0: jdbc:drill:drillbit=localhost> select  distinct(payer) from dfs.`/apps/payments` ;
+0: jdbc:drill:drillbit=localhost> select  distinct(origin) from dfs.`/apps/flights` ;
 
 ```
 ##Cleaning Up
 
-You can delete the topic and table using the following command from a container terminal:
+You can delete the stream and table using the following command from a container terminal:
 ```
-maprcli stream topic delete -path /mapr/maprdemo.mapr.io/apps/paystream -topic payment
-maprcli table delete -path /mapr/maprdemo.mapr.io/apps/payments
+maprcli stream topic delete -path /mapr/maprdemo.mapr.io/apps/stream -topic payment
+maprcli table delete -path /mapr/maprdemo.mapr.io/apps/flights
 
 ```
 ## Conclusion
 
 In this example you have learned how to:
 
-* Publish using the Kafka API  Medicare Open payments data from a CSV file into MapR-ES 
-* Consume and transform the streaming data with Spark Streaming and the Kafka API
-* Transform the data into JSON format and save to the MapR-DB document database using the Spark-DB connector
+* Build and save a spark machine learning model for predicting flight delays
+* Publish using the Kafka API  flights data from a JSON file into MapR-ES 
+* Consume and enrich the streaming data with the Kafka API, Spark Streaming and the ML model
+* Save to the MapR-DB document database using the Spark-DB connector
 * Query and Load the JSON data from the MapR-DB document database using the Spark-DB connector and Spark SQL 
 * Query the MapR-DB document database using Apache Drill 
 * Query the MapR-DB document database using Java and the OJAI library
