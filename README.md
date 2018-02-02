@@ -212,7 +212,7 @@ maprdb mapr:> find /apps/flights --where '{"$and":[{"$eq":{"pred_dtree":1.0}},{ 
 ```
 find /apps/flights --where '{"$and":[{"$eq":{"pred_dtree":1.0}},{ "$like" : {"_id":"%SFO_DEN%"} }]}' --f _id,pred_dtree
 ```
-**find all of the american airlines flights predicted late *
+**find all of the american airlines flights predicted late **
 ```
 maprdb mapr:> find /apps/flights --where '{"$and":[{"$eq":{"pred_dtree":1.0}},{ "$like" : {"_id":"AA%"} }]}' --f _id,pred_dtree
 ```
@@ -225,7 +225,7 @@ From your mac terminal connect to Drill as user mapr through JDBC by running sql
 /opt/mapr/drill/drill-1.11.0/bin/sqlline -u "jdbc:drill:drillbit=localhost" -n mapr
 
 
-**what is the count of predicted delay/notdelay by scheduled departure hour*
+**what is the count of predicted delay/notdelay by scheduled departure hour**
 ```
 0: jdbc:drill:drillbit=localhost> select crsdephour, pred_dtree, count(pred_dtree) as countp from dfs.`/apps/flights` group by crsdephour, pred_dtree order by crsdephour;
 ```
