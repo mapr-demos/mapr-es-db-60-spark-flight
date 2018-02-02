@@ -273,7 +273,7 @@ In Drill try
 0: jdbc:drill:drillbit=localhost> select  distinct(origin) from dfs.`/apps/flights` ;
 
 ```
-##Cleaning Up
+## Cleaning Up
 
 You can delete the stream and table using the following command from a container terminal:
 ```
