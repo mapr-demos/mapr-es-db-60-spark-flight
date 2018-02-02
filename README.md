@@ -30,16 +30,14 @@ After the container has started, from your mac terminal log in to the docker con
 ```
 $ssh root@maprdemo -p 2222
 ```
-In the docker container use the mapr command line interface to create a stream, 2 topics, and table:
+In the docker container use the mapr command line interface to create a stream, 2 topics, get info and create a table:
 ```
 maprcli stream create -path /apps/stream -produceperm p -consumeperm p -topicperm p
 maprcli stream topic create -path /apps/stream -topic flights -partitions 3
 maprcli stream topic create -path /apps/stream -topic flightp -partitions 3  
-```
-get info on topic
-```
+
 maprcli stream topic info -path /apps/stream -topic flights
-```
+
 maprcli table create -path /mapr/maprdemo.mapr.io/apps/flights -tabletype json -defaultreadperm p -defaultwriteperm p
   
 ```
