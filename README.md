@@ -28,7 +28,7 @@ Install the MapR Container For Developers following the setup information [**her
 
 After the container has started, from your mac terminal log in to the docker container:
 ```
-$ssh root@maprdemo -p 2222
+$ ssh root@maprdemo -p 2222
 ```
 In the docker container use the mapr command line interface to create a stream, 2 topics, get info and create a table:
 ```

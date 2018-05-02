@@ -130,7 +130,7 @@ object SparkKafkaConsumerProducer extends Serializable {
         println("show dstream dataset received ")
         df.show
 
-        // get cluster categories from  model
+        // get predictions from  model
         val predictions = model.transform(df)
         println("show dstream dataset received with predictions ")
         predictions.show()

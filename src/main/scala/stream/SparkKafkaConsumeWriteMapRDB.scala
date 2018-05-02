@@ -1,4 +1,4 @@
-package streaming
+package stream
 
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -84,7 +84,6 @@ object SparkKafkaConsumeWriteMapRDB {
     val messagesDStream = KafkaUtils.createDirectStream[String, String](
       ssc, LocationStrategies.PreferConsistent, consumerStrategy
     )
-
     val valuesDStream = messagesDStream.map(_.value())
     
    // valuesDStream.saveToMapRDB(tableName, createTable=false, bulkInsert=true, idFieldPath = "_id")
@@ -107,10 +106,7 @@ object SparkKafkaConsumeWriteMapRDB {
       }
     }
 
-    //   val df: Dataset[FlightwPred] = spark.read.schema(schema).json(rdd).as[FlightwPred]
-
-    //  
-
+ 
     ssc.start()
     ssc.awaitTermination()
     }

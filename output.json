@@ -1,0 +1,13 @@
+{
+    "_id": "UA_2017-03-28_DEN_SFO_721",
+    "dofW": 2,
+    "carrier": "UA",
+    "origin": "DEN",
+    "dest": "SFO",
+    "crsdephour": 11,
+    "crsdeptime": 1120.0,
+    "crsarrtime": 1308.0,
+    "crselapsedtime": 168.0,
+    "label": 0.0,
+    "pred_dtree": 1.0
+}
